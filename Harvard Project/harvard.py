@@ -6,9 +6,10 @@ import json
 
 st.title("HARVARD ARTIFACT COLLECTIONS")
 st.header("📝Instructions")
-st.markdown("""- Use Tab 1 to collect data by selecting a classification, then view the records with Show Data.\n
-- Tab 2 is to insert the collected records into the SQL database.\n
-- Tab 3 run queries — just pick one from the dropdown and click Run Query to see the results.
+st.markdown("""- In Tab 1, click Collect Data to fetch records from the Harvard Art Museums API.\n
+- In Tab 2, click Import Data to save the collected artifacts into a local SQLite database and preview the tables.\n
+- Use Tab 3 to select and run SQL queries to analyze artifacts by metadata, media, and colors.\n
+- Explore trends, top colors, and other insights directly in the app
             """)
 
 #Tabs
@@ -165,9 +166,6 @@ with tab3:
 
         "What is the average coverage percentage for each hue?": 
             "SELECT hue, AVG(percent) as avg_coverage FROM artifact_colors GROUP BY hue;",
-
-        "List all colors used for a given artifact ID.": 
-            "SELECT color, hue, percent FROM artifact_colors WHERE objid = ?;",  # parameterized query
 
         "What is the total number of color entries in the dataset?": 
             "SELECT COUNT(*) as total_colors FROM artifact_colors;",
