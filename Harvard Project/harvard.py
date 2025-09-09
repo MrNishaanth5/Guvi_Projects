@@ -21,7 +21,7 @@ names = [
     'Fragments','Manuscripts','Seals','Straus Materials'
 ]
 
-# TAB 1 
+# Tab 1 
 with tab1:
     st.header("🏺Artifact Classifications")
     select = st.selectbox("Choose an option", names)
@@ -44,7 +44,7 @@ with tab1:
         metadata, artifact_media, artifact_colors = [], [], []
         for i in data2:
             metadata.append(dict(
-                objectid=i['objectid'],
+                objid=i['objectid'],
                 id=i['id'],
                 title=i.get('title'),
                 culture=i.get('culture'),
@@ -93,7 +93,7 @@ with tab1:
         st.json(artifact_colors[:3])
 
 
-# TAB 2
+# Tab 2
 with tab2:
     st.header("🗄️Import Collected Data")
 
@@ -102,6 +102,7 @@ with tab2:
         media_df = pd.DataFrame(st.session_state.get("artifact_media", []))
         colors_df = pd.DataFrame(st.session_state.get("artifact_colors", []))
 
+        #Import to database
         conn = sqlite3.connect(r"D:\Harvard Project\artifact_details.db")
         if not metadata_df.empty:
             metadata_df.to_sql("metadata", conn, if_exists="replace", index=False)
@@ -125,7 +126,6 @@ with tab2:
 with tab3:
     st.header("🔎Query & Analysis")
 
-    # Dictionary mapping query names to SQL
     queries = {
         "List all artifacts from the 11th century belonging to Byzantine culture.": 
             "SELECT * FROM metadata WHERE culture='Byzantine' AND century='11th century';",
@@ -143,20 +143,49 @@ with tab3:
             "SELECT department, COUNT(*) as artifact_count FROM metadata GROUP BY department;",
 
         "Which artifacts have more than 1 image?": 
-            "SELECT objid, COUNT(*) as image_count FROM artifact_media GROUP BY objid HAVING COUNT(*) > 1;",
+            "SELECT objid, imagecount FROM artifact_media WHERE imagecount > 1;",
 
         "What is the average rank of all artifacts?": 
             "SELECT AVG(rank) as avg_rank FROM artifact_media;",
 
         "Which artifacts have a higher colorcount than mediacount?": 
-            "SELECT m.objid, m.rank, COUNT(c.color) as colorcount FROM artifact_media m "
-            "JOIN artifact_colors c ON m.objid = c.objid GROUP BY m.objid HAVING colorcount > m.rank;",
+            "SELECT objid, colorcount, mediacount FROM artifact_media WHERE colorcount > mediacount;",
 
         "List all artifacts created between 1500 and 1600.": 
-            "SELECT * FROM metadata WHERE datebegin >= 1500 AND dateend <= 1600;",
+            "SELECT * FROM artifact_media WHERE datebegin >= 1500 AND dateend <= 1600;",
 
         "How many artifacts have no media files?": 
-            "SELECT COUNT(*) FROM metadata WHERE objectid NOT IN (SELECT objid FROM artifact_media);",
+            "SELECT COUNT(*) as no_media_count FROM artifact_media WHERE mediacount=0;",
+
+        "What are all the distinct hues used in the dataset?": 
+            "SELECT DISTINCT hue FROM artifact_colors;",
+
+        "What are the top 5 most used colors by frequency?": 
+            "SELECT color, COUNT(*) as frequency FROM artifact_colors GROUP BY color ORDER BY frequency DESC LIMIT 5;",
+
+        "What is the average coverage percentage for each hue?": 
+            "SELECT hue, AVG(percent) as avg_coverage FROM artifact_colors GROUP BY hue;",
+
+        "List all colors used for a given artifact ID.": 
+            "SELECT color, hue, percent FROM artifact_colors WHERE objid = ?;",  # parameterized query
+
+        "What is the total number of color entries in the dataset?": 
+            "SELECT COUNT(*) as total_colors FROM artifact_colors;",
+
+        "List artifact titles and hues for all artifacts belonging to the Byzantine culture.": 
+            "SELECT m.title, c.hue FROM metadata m JOIN artifact_colors c ON m.objid = c.objid WHERE m.culture='Byzantine';",
+
+        "List each artifact title with its associated hues.": 
+            "SELECT m.title, c.hue FROM metadata m JOIN artifact_colors c ON m.objid = c.objid;",
+
+        "Get artifact titles, cultures, and media ranks where the period is not null.": 
+            "SELECT m.title, m.culture, am.rank FROM metadata m JOIN artifact_media am ON m.objid = am.objid WHERE m.period IS NOT NULL;",
+
+        "Find artifact titles ranked in the top 10 that include the color hue 'Grey'.": 
+            "SELECT m.title, am.rank FROM metadata m JOIN artifact_media am ON m.objid = am.objid JOIN artifact_colors c ON m.objid = c.objid WHERE c.hue='Grey' ORDER BY a.rank ASC LIMIT 10;",
+
+        "How many artifacts exist per classification, and what is the average media count for each?": 
+            "SELECT m.classification, COUNT(*) as artifact_count, AVG(am.mediacount) as avg_media_count FROM metadata m JOIN artifact_media am ON m.objid = am.objid GROUP BY m.classification;"
     }
 
     selected_query = st.selectbox("Select a Query to Analyse", list(queries.keys()))
@@ -170,6 +199,3 @@ with tab3:
         st.dataframe(df) 
         
         connect.close()
-
-
-
