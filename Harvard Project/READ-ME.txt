@@ -1,0 +1,10 @@
+# Harvard Artifact Collections
+
+A Streamlit app to collect, store, and analyze artifacts from the [Harvard Art Museums API]
+(https://www.harvardartmuseums.org/collections),(https://api.harvardartmuseums.org/object).
+
+## Features
+- Fetch artifacts by classification (Paintings, Sculptures, Coins, etc.)
+- Store data in a local SQLite database
+- Analyze artifacts by metadata, media, and color information
+- Run queries for insights like top colors, average ranks, and artifacts by culture
